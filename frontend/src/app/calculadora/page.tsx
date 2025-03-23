@@ -3,12 +3,6 @@
 import React from 'react';
 import { Container, Typography, Box, Paper } from '@mui/material';
 import FinancingCalculator from '@/components/financing/FinancingCalculator';
-import { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Calculadora de Financiamiento | LlévateloExpress',
-  description: 'Calcula tus opciones de financiamiento para vehículos y maquinaria en Venezuela.',
-};
 
 const CalculadoraPage = () => {
   return (

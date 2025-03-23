@@ -6,6 +6,17 @@ from .models import ClientProfile, ClientInteraction
 
 User = get_user_model()
 
+class UserMinimalSerializer(serializers.ModelSerializer):
+    """Serializer para información mínima de usuarios"""
+    full_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'full_name']
+    
+    def get_full_name(self, obj):
+        return obj.get_full_name() or obj.username
+
 class ClientProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClientProfile

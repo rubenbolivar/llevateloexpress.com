@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import FinancingPlan, PlanRequirement, FinancingSimulation, PaymentSchedule
-from products.serializers import ProductListSerializer, ProductSerializer
+from products.serializers import ProductListSerializer, ProductDetailSerializer
 from products.models import Product
 
 class PlanRequirementSerializer(serializers.ModelSerializer):

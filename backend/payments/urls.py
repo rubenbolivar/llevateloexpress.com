@@ -2,12 +2,12 @@ from django.urls import path, include
 from rest_framework_nested import routers
 from .views import (
     PaymentMethodViewSet, PaymentScheduleViewSet, 
-    PaymentTransactionViewSet, UserPaymentsOverviewView
+    PaymentViewSet, UserPaymentsOverviewView
 )
 
 router = routers.SimpleRouter()
 router.register(r'methods', PaymentMethodViewSet, basename='payment-method')
-router.register(r'transactions', PaymentTransactionViewSet, basename='payment-transaction')
+router.register(r'transactions', PaymentViewSet, basename='payment-transaction')
 
 # Nested routes for payment schedules
 applications_router = routers.SimpleRouter()

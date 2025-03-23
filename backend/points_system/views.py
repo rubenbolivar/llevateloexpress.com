@@ -10,7 +10,7 @@ from django.db.models import Sum, Count
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
 
-from .models import PointsConfiguration, ClientPoints, PointsTransaction, PointTransaction, UserPointsSummary, PointsConfig
+from .models import PointsConfig, ClientPoints, PointTransaction, UserPointsSummary
 from .serializers import (
     PointsConfigurationSerializer, ClientPointsSerializer,
     PointsTransactionSerializer, PointsAdjustmentSerializer,
@@ -26,15 +26,15 @@ User = get_user_model()
 
 class PointsConfigurationViewSet(viewsets.ModelViewSet):
     """ViewSet for managing points system configuration"""
-    queryset = PointsConfiguration.objects.all()
+    queryset = PointsConfig.objects.all()
     serializer_class = PointsConfigurationSerializer
     permission_classes = [IsAdminUser]
     
     def get_object(self):
         """Always return the current configuration"""
-        config = PointsConfiguration.objects.first()
+        config = PointsConfig.objects.first()
         if not config:
-            config = PointsConfiguration.objects.create()
+            config = PointsConfig.objects.create()
         return config
     
     @action(detail=False, methods=['get'], url_path='current')
@@ -118,17 +118,17 @@ class PointsTransactionViewSet(viewsets.ReadOnlyModelViewSet):
             if user_id:
                 try:
                     points_profile = ClientPoints.objects.get(user_id=user_id)
-                    return PointsTransaction.objects.filter(client_points=points_profile)
+                    return PointTransaction.objects.filter(client_points=points_profile)
                 except ClientPoints.DoesNotExist:
-                    return PointsTransaction.objects.none()
-            return PointsTransaction.objects.all()
+                    return PointTransaction.objects.none()
+            return PointTransaction.objects.all()
         else:
             # Regular users can only see their own transactions
             try:
                 points_profile = ClientPoints.objects.get(user=self.request.user)
-                return PointsTransaction.objects.filter(client_points=points_profile)
+                return PointTransaction.objects.filter(client_points=points_profile)
             except ClientPoints.DoesNotExist:
-                return PointsTransaction.objects.none()
+                return PointTransaction.objects.none()
 
 class EducationalCourseCompletionView(generics.GenericAPIView):
     """View for awarding points for educational course completion"""

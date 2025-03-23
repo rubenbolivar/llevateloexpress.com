@@ -15,7 +15,7 @@ const baseQuery = fetchBaseQuery({
 });
 
 // Custom baseQuery with token refresh logic
-const baseQueryWithReauth = async (args, api, extraOptions) => {
+const baseQueryWithReauth = async (args: any, api: any, extraOptions: any) => {
   let result = await baseQuery(args, api, extraOptions);
   
   // If we get a 401 Unauthorized response, try to refresh the token
@@ -29,7 +29,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
     
     if (refreshResult.data) {
       // Store the new token
-      const { access } = refreshResult.data;
+      const { access } = refreshResult.data as { access: string };
       localStorage.setItem('token', access);
       
       // Retry the original request
@@ -59,6 +59,8 @@ export const apiSlice = createApi({
     'UserStats',
     'ApplicationStats',
     'PaymentStats',
+    'PointsBalance',
+    'PointsTransactions',
   ],
   endpoints: (builder) => ({}),
 });

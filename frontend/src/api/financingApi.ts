@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { apiSlice } from './apiSlice';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -54,6 +55,36 @@ export interface CalculatorResult {
   financed_amount_raw?: number;
 }
 
+// RTK Query endpoints
+export const financingApiSlice = apiSlice.injectEndpoints({
+  endpoints: (builder) => ({
+    getFinancingPlans: builder.query({
+      query: () => '/financing/plans/',
+    }),
+    calculateFinancing: builder.mutation<CalculatorResult, FinancingCalculatorParams>({
+      query: (params) => ({
+        url: '/financing/calculator/v2/',
+        method: 'POST',
+        body: params,
+      }),
+    }),
+    saveSimulation: builder.mutation({
+      query: (simulationData) => ({
+        url: '/financing/simulations/',
+        method: 'POST',
+        body: simulationData,
+      }),
+    }),
+  }),
+});
+
+export const {
+  useGetFinancingPlansQuery,
+  useCalculateFinancingMutation,
+  useSaveSimulationMutation,
+} = financingApiSlice;
+
+// Standalone functions
 export const calculateFinancing = async (params: FinancingCalculatorParams): Promise<CalculatorResult> => {
   try {
     const response = await financingApi.post('/calculator/v2/', params);

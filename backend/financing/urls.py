@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    FinancingPlanListView,
+    FinancingPlanViewSet,
     FinancingCalculatorView,
     ProductFinancingOptionsView,
     SaveSimulationView,
@@ -12,7 +12,7 @@ app_name = 'financing'
 
 urlpatterns = [
     # Planes de financiamiento
-    path('plans/', FinancingPlanListView.as_view(), name='financing-plans'),
+    path('plans/', FinancingPlanViewSet.as_view({'get': 'list'}), name='financing-plans'),
     
     # Calculadora
     path('calculator/', FinancingCalculatorView.as_view(), name='financing-calculator'),

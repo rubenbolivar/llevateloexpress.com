@@ -18,6 +18,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  SelectChangeEvent,
 } from '@mui/material';
 import {
   MoreVert as MoreVertIcon,
@@ -83,12 +84,12 @@ const StatCard = ({ title, value, icon, color }: { title: string; value: string;
 );
 
 const Dashboard = () => {
-  const [salesPeriod, setSalesPeriod] = useState('month');
+  const [salesPeriod, setSalesPeriod] = useState<string>('month');
   const { data: stats, isLoading: isStatsLoading, error: statsError } = useGetDashboardStatsQuery();
   const { data: salesData, isLoading: isSalesLoading, error: salesError } = useGetSalesStatsQuery(salesPeriod);
 
-  const handlePeriodChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setSalesPeriod(event.target.value as string);
+  const handlePeriodChange = (event: SelectChangeEvent<string>) => {
+    setSalesPeriod(event.target.value);
   };
 
   if (isStatsLoading) {
@@ -166,7 +167,7 @@ const Dashboard = () => {
               action={
                 <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
                   <InputLabel>Período</InputLabel>
-                  <Select
+                  <Select<string>
                     value={salesPeriod}
                     onChange={handlePeriodChange}
                     label="Período"

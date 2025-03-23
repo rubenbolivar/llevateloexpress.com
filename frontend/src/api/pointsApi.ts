@@ -65,7 +65,7 @@ export const pointsApiSlice = apiSlice.injectEndpoints({
         url: '/points/delay/',
         method: 'GET',
       }),
-      providesTags: ['WaitingDays'],
+      providesTags: ['PointsBalance'],
     }),
   }),
 });

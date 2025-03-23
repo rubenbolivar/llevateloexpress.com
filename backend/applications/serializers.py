@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import CreditApplication, ApplicationDocument, ApplicationStatus, ApplicationNote
-from products.serializers import ProductSerializer
+from products.serializers import ProductDetailSerializer
 from financing.serializers import FinancingPlanSerializer
 from accounts.serializers import UserMinimalSerializer
 
@@ -36,8 +36,46 @@ class ApplicationNoteSerializer(serializers.ModelSerializer):
         fields = ['id', 'note', 'created_by', 'created_at']
         read_only_fields = ['created_at']
 
+class CreditApplicationMinimalSerializer(serializers.ModelSerializer):
+    """Serializer minimal para referenciar solicitudes de crédito"""
+    status_display = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CreditApplication
+        fields = [
+            'id', 'reference_number', 'status', 'status_display',
+            'created_at', 'amount'
+        ]
+    
+    def get_status_display(self, obj):
+        return obj.get_status_display()
+
+class CreditApplicationListSerializer(serializers.ModelSerializer):
+    """Lista resumida de solicitudes de crédito"""
+    user = UserMinimalSerializer(read_only=True)
+    product_name = serializers.SerializerMethodField()
+    plan_name = serializers.SerializerMethodField()
+    status_display = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CreditApplication
+        fields = [
+            'id', 'reference_number', 'user', 'product_name', 'plan_name',
+            'amount', 'monthly_payment', 'status', 'status_display',
+            'created_at', 'updated_at', 'submitted_at'
+        ]
+    
+    def get_product_name(self, obj):
+        return obj.product.name if obj.product else None
+    
+    def get_plan_name(self, obj):
+        return obj.financing_plan.name if obj.financing_plan else None
+    
+    def get_status_display(self, obj):
+        return obj.get_status_display()
+
 class CreditApplicationSerializer(serializers.ModelSerializer):
-    product = ProductSerializer(read_only=True)
+    product = ProductDetailSerializer(read_only=True)
     financing_plan = FinancingPlanSerializer(read_only=True)
     user = UserMinimalSerializer(read_only=True)
     status_display = serializers.SerializerMethodField()

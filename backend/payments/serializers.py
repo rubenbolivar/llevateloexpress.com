@@ -158,29 +158,28 @@ class PaymentTransactionListSerializer(serializers.ModelSerializer):
     application_reference = serializers.CharField(source='application.reference_number', read_only=True)
     
     class Meta:
-        model = PaymentTransaction
+        model = Payment
         fields = ['id', 'application_reference', 'payment_method_name', 
-                 'payment_type_display', 'amount', 'reference_number', 
-                 'transaction_date', 'status', 'status_display']
+                 'payment_type_display', 'amount', 'payment_date', 'status_display']
 
 class PaymentTransactionDetailSerializer(serializers.ModelSerializer):
     payment_method = PaymentMethodSerializer(read_only=True)
-    application = FinancingApplicationListSerializer(read_only=True)
+    application = CreditApplicationMinimalSerializer(read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     payment_type_display = serializers.CharField(source='get_payment_type_display', read_only=True)
     receipt_url = serializers.SerializerMethodField()
     verified_by_name = serializers.SerializerMethodField()
     
     class Meta:
-        model = PaymentTransaction
+        model = Payment
         fields = ['id', 'application', 'payment_method', 'payment_type', 
                  'payment_type_display', 'amount', 'reference_number', 
-                 'transaction_date', 'receipt', 'receipt_url', 'payer_name',
+                 'payment_date', 'receipt', 'receipt_url', 'payer_name',
                  'status', 'status_display', 'verified_by', 'verified_by_name',
                  'verification_date', 'rejection_reason', 'notes',
                  'created_at', 'updated_at']
         read_only_fields = ['verified_by', 'verification_date', 'rejection_reason',
-                          'status', 'created_at', 'updated_at']
+                         'created_at', 'updated_at']
     
     def get_receipt_url(self, obj):
         if obj.receipt:
@@ -196,9 +195,9 @@ class PaymentTransactionDetailSerializer(serializers.ModelSerializer):
 
 class PaymentTransactionCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PaymentTransaction
+        model = Payment
         fields = ['application', 'payment_method', 'payment_type', 'amount', 
-                 'reference_number', 'transaction_date', 'receipt', 'payer_name', 'notes']
+                'reference_number', 'payment_date', 'receipt', 'payer_name', 'notes']
     
     def create(self, validated_data):
         # Add the current user as payer name if not provided
