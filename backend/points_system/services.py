@@ -27,7 +27,7 @@ class PointsCalculator:
         user = payment.application.user
         
         # Get or create client points profile
-        points_profile, created = ClientPoints.objects.get_or_create(
+        points_profile, created = UserPointsSummary.objects.get_or_create(
             user=user,
             defaults={'current_points': cls.get_initial_points()}
         )
@@ -49,7 +49,7 @@ class PointsCalculator:
         
         if scheduled_payment:
             # Calculate days from due date
-            days_late = (payment.transaction_date - scheduled_payment.due_date).days
+            days_late = (payment.payment_date - scheduled_payment.due_date).days
             
             # Determine payment category (green, yellow, red)
             if days_late <= 0:
@@ -121,7 +121,7 @@ class PointsCalculator:
             PointsTransaction: The created points transaction
         """
         # Get or create client points profile
-        points_profile, created = ClientPoints.objects.get_or_create(
+        points_profile, created = UserPointsSummary.objects.get_or_create(
             user=user,
             defaults={'current_points': cls.get_initial_points()}
         )
@@ -152,7 +152,7 @@ class PointsCalculator:
             PointsTransaction: The created points transaction
         """
         # Get or create client points profile
-        points_profile, created = ClientPoints.objects.get_or_create(
+        points_profile, created = UserPointsSummary.objects.get_or_create(
             user=user,
             defaults={'current_points': cls.get_initial_points()}
         )
@@ -190,14 +190,14 @@ class PointsCalculator:
         
         # Create new points profile
         initial_points = cls.get_initial_points()
-        points_profile = ClientPoints.objects.create(
+        points_profile = UserPointsSummary.objects.create(
             user=user,
             current_points=initial_points
         )
         
         # Record initial points transaction
         PointsTransaction.objects.create(
-            client_points=points_profile,
+            user=points_profile.user,
             transaction_type='initial',
             points_amount=initial_points,
             notes="Initial points for new client"

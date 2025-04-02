@@ -3,8 +3,8 @@ from django.db.models import Count, Sum, Avg, Q, F, ExpressionWrapper, fields
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from applications.models import CreditApplication
-from payments.models import PaymentTransaction, PaymentSchedule, Payment
-from points_system.models import ClientPoints, PointsTransaction, UserPointsSummary
+from payments.models import PaymentSchedule, Payment
+from points_system.models import UserPointsSummary, PointTransaction
 from products.models import Product, Category
 from accounts.models import User
 from django.db.models.functions import TruncMonth, TruncDay, TruncWeek, Cast, ExtractYear, ExtractMonth
@@ -29,7 +29,7 @@ class DashboardAnalytics:
         
         # Users with active applications
         users_with_applications = User.objects.filter(
-            applications__isnull=False
+            credit_applications__isnull=False
         ).distinct().count()
         
         # New users in the last 30 days
@@ -91,12 +91,12 @@ class DashboardAnalytics:
     @classmethod
     def get_payment_statistics(cls, date_from=None, date_to=None):
         """Get payment statistics"""
-        queryset = PaymentTransaction.objects.all()
+        queryset = Payment.objects.all()
         
         if date_from:
-            queryset = queryset.filter(transaction_date__gte=date_from)
+            queryset = queryset.filter(payment_date__gte=date_from)
         if date_to:
-            queryset = queryset.filter(transaction_date__lte=date_to)
+            queryset = queryset.filter(payment_date__lte=date_to)
         
         total_payments = queryset.count()
         verified_payments = queryset.filter(status='verified').count()
@@ -122,7 +122,7 @@ class DashboardAnalytics:
         
         for payment in queryset.filter(status='verified', scheduled_payment__isnull=False):
             scheduled_payment = payment.scheduled_payment
-            if payment.transaction_date > scheduled_payment.due_date:
+            if payment.payment_date > scheduled_payment.due_date:
                 late_payments_count += 1
             else:
                 on_time_payments_count += 1
@@ -151,7 +151,7 @@ class DashboardAnalytics:
     def get_points_statistics(cls):
         """Get points system statistics"""
         # Get points distribution
-        points_profiles = ClientPoints.objects.all()
+        points_profiles = UserPointsSummary.objects.all()
         total_profiles = points_profiles.count()
         
         if total_profiles == 0:
@@ -192,7 +192,7 @@ class DashboardAnalytics:
         ).count()
         
         # Points transactions by type
-        transactions_by_type = PointsTransaction.objects.values(
+        transactions_by_type = PointTransaction.objects.values(
             'transaction_type'
         ).annotate(
             count=Count('id'),
@@ -266,8 +266,8 @@ class DashboardAnalytics:
         approved_applications = CreditApplication.objects.filter(status='approved').count()
         
         # Key payment metrics
-        verified_payments = PaymentTransaction.objects.filter(status='verified').count()
-        total_payment_amount = PaymentTransaction.objects.filter(status='verified').aggregate(
+        verified_payments = Payment.objects.filter(status='verified').count()
+        total_payment_amount = Payment.objects.filter(status='verified').aggregate(
             total=Sum('amount')
         )['total'] or 0
         
@@ -289,15 +289,14 @@ class DashboardAnalytics:
             for app in recent_applications
         ]
         
-        recent_payments = PaymentTransaction.objects.order_by('-created_at')[:5]
+        recent_payments = Payment.objects.order_by('-created_at')[:5]
         recent_payments_data = [
             {
                 'id': payment.id,
-                'reference_number': payment.reference_number,
-                'application': payment.application.reference_number,
-                'amount': str(payment.amount),
-                'status': payment.get_status_display(),
-                'transaction_date': payment.transaction_date.isoformat()
+                'amount': payment.amount,
+                'payment_type': payment.payment_type,
+                'status': payment.status,
+                'payment_date': payment.payment_date.isoformat()
             }
             for payment in recent_payments
         ]
@@ -475,7 +474,7 @@ def get_product_stats():
     # Categorías más populares
     top_categories = Category.objects.annotate(
         products_count=Count('products'),
-        applications_count=Count('products__credit_applications')
+        applications_count=Count('products__credit_applications', distinct=True)
     ).order_by('-applications_count')[:5]
     
     return {
@@ -790,7 +789,7 @@ def get_product_stats():
     """Get product-related statistics"""
     # Get top products by number of applications
     top_products = Product.objects.annotate(
-        applications_count=Count('applications')
+        applications_count=Count('credit_applications')
     ).filter(
         applications_count__gt=0
     ).order_by('-applications_count')[:10]
@@ -798,7 +797,7 @@ def get_product_stats():
     # Get top categories by number of products and applications
     top_categories = Category.objects.annotate(
         products_count=Count('products', distinct=True),
-        applications_count=Count('products__applications', distinct=True)
+        applications_count=Count('products__credit_applications', distinct=True)
     ).filter(
         products_count__gt=0
     ).order_by('-applications_count')[:5]
@@ -833,7 +832,7 @@ def get_user_stats():
     """Get user-related statistics"""
     # Get top applicants
     top_applicants = User.objects.annotate(
-        applications_count=Count('applications')
+        applications_count=Count('credit_applications')
     ).filter(
         applications_count__gt=0,
         is_staff=False

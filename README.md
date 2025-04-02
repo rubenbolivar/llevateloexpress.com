@@ -18,99 +18,159 @@ LlévateloExpress es una plataforma web completa para la financiación y adquisi
 - Sistema de seguimiento de pagos
 - Gestión de solicitudes de crédito
 
-## Estado Actual del Proyecto (Abril 2023)
+## Estado Actual del Proyecto (Febrero 2025)
 
-### Componentes Implementados
-- ✅ **Sistema de Puntos**: Gestión completa de puntos por puntualidad con visualización para usuarios
-- ✅ **Calculadora de Financiamiento**: Cálculos precisos para ambas modalidades con visualización interactiva
-- ✅ **Sistema de Solicitudes**: Backend completo con gestión de estados y documentos
-- ✅ **Panel Administrativo**: API de estadísticas y reportes implementada
+### Componentes Completados
+- ✅ **Panel Administrativo**: 
+  - Validación de Pagos: Interfaz completa para revisar, aprobar o rechazar pagos
+  - Configuración del Sistema: Panel configurable con pestañas para puntos, financiamiento, pagos y sistema general
+  - Dashboard con estadísticas y reportes
+  
+- ✅ **Flujo de Solicitudes**:
+  - Interfaz de usuario para visualizar solicitudes con diseño de tarjetas informativas
+  - Seguimiento visual del estado mediante stepper
+  - Vista detallada con pestañas para información del producto, plan, documentos e historial
+
+- ✅ **Sistema de Puntos**: 
+  - Gestión completa de puntos por puntualidad
+  - Visualización para usuarios y administradores
+  - Cálculo automático de días de espera
+
+- ✅ **Calculadora de Financiamiento**: 
+  - Cálculos precisos para ambas modalidades con visualización interactiva
+  - Simulación de pagos mensuales y adjudicación
+  - Guardado de simulaciones para usuarios registrados
 
 ### En Progreso
-- 🔄 Frontend del panel administrativo (60%)
-- 🔄 Flujo completo de solicitudes de financiamiento (70%)
-- 🔄 Sistema de notificaciones (20%)
-
-### Próximos Pasos
-1. Completar interfaces del panel administrativo
-2. Finalizar flujo de usuario para solicitudes
-3. Implementar sistema de notificaciones por email
-
-Para más detalles sobre el estado del proyecto, consulte el [Informe de Avance](./INFORME_AVANCE_LLEVATELOEXPRESS.md).
+- 🔄 Sistema de notificaciones (90%) - Documentación completa, pendiente de implementación
+- 🔄 Optimizaciones de rendimiento (80%) 
+- 🔄 Pruebas automatizadas (60%)
 
 ## Tecnologías Utilizadas
 
 ### Backend
 - Django 4.2
-- Django REST Framework
+- Django REST Framework 3.15
 - PostgreSQL
 - JWT Authentication
+- Gunicorn para despliegue en producción
 
 ### Frontend
-- Next.js
+- Next.js 14
 - TypeScript
-- Material UI
+- Material UI 5
 - Redux Toolkit
 - Tailwind CSS
 - React Hook Form
 
-## Requisitos previos
+## Requisitos Previos
 
 - Python 3.9+
-- Node.js 16+
+- Node.js 18+
 - PostgreSQL
-- npm o yarn
+- Git (opcional, pero recomendado para gestionar el código)
 
-## Instalación
+## Instalación y Despliegue
 
-### Backend (Django)
+### Método Automatizado (Recomendado)
 
-1. Clona el repositorio
-2. Navega al directorio backend
-3. Crea un entorno virtual:
+Utilizando nuestro script de despliegue:
+
+```bash
+# Clona el repositorio
+git clone https://github.com/tu-usuario/llevateloexpress.git
+cd llevateloexpress
+
+# Da permisos de ejecución al script
+chmod +x deploy.sh
+
+# Ejecuta el script de despliegue
+./deploy.sh
+```
+
+El script se encargará de:
+1. Verificar las dependencias necesarias
+2. Configurar el entorno virtual de Python
+3. Instalar las dependencias del backend
+4. Configurar la base de datos
+5. Instalar las dependencias del frontend
+6. Compilar la aplicación frontend
+7. Ofrecer opciones para crear un superusuario y cargar datos iniciales
+
+### Instalación Manual
+
+#### Backend (Django)
+
+1. Navega al directorio backend
+2. Crea un entorno virtual:
    ```
-   python -m venv venv
+   python3 -m venv venv
    ```
-4. Activa el entorno virtual:
+3. Activa el entorno virtual:
    - Windows: `venv\Scripts\activate`
    - macOS/Linux: `source venv/bin/activate`
-5. Instala las dependencias:
+4. Instala las dependencias:
    ```
    pip install -r requirements.txt
    ```
-6. Configura el archivo .env (usa .env.example como referencia)
-7. Aplica las migraciones:
+5. Configura el archivo .env (usa .env.example como referencia)
+6. Aplica las migraciones:
    ```
    python manage.py migrate
    ```
-8. Crea un superusuario:
+7. Crea un superusuario:
    ```
    python manage.py createsuperuser
    ```
-9. Inicia el servidor:
+8. (Opcional) Carga datos iniciales:
    ```
-   python manage.py runserver
+   python manage.py loaddata fixtures/payment_methods.json
+   python manage.py loaddata fixtures/products.json
+   python manage.py loaddata fixtures/financing_plans.json
    ```
 
-### Frontend (Next.js)
+#### Frontend (Next.js)
 
 1. Navega al directorio frontend
 2. Instala las dependencias:
    ```
    npm install
    ```
-   o
+3. Construye la aplicación:
    ```
-   yarn
+   npm run build
    ```
-3. Inicia el servidor de desarrollo:
-   ```
-   npm run dev
-   ```
-   o
-   ```
-   yarn dev
-   ```
+
+### Iniciar los Servidores
+
+#### Producción
+
+Backend:
+```bash
+cd backend
+./start.sh
+```
+
+Frontend:
+```bash
+cd frontend
+./start.sh
+```
+
+#### Desarrollo
+
+Backend:
+```bash
+cd backend
+source venv/bin/activate
+python manage.py runserver
+```
+
+Frontend:
+```bash
+cd frontend
+npm run dev
+```
 
 ## Estructura del Proyecto
 
@@ -135,19 +195,82 @@ Para más detalles sobre el estado del proyecto, consulte el [Informe de Avance]
 - **src/features**: Características principales organizadas por dominio
 - **src/styles**: Estilos globales
 
-## Equipo de Desarrollo
+## Despliegue en Producción
 
-Este proyecto está siendo desarrollado por un equipo de ingenieros de software especializados en desarrollo web full-stack, enfocados en crear una solución robusta y escalable.
+Para un despliegue en producción en un servidor web como Nginx, se recomienda:
 
-## Contribuciones
+1. Utilizar el script `deploy.sh` para la instalación inicial
+2. Configurar Nginx como proxy inverso para el frontend y backend
+3. Configurar certificados SSL para HTTPS
+4. Configurar servicios systemd para mantener en ejecución los servidores
+5. Programar copias de seguridad de la base de datos
 
-Para contribuir al proyecto, por favor sigue estos pasos:
+### Ejemplo de Configuración de Nginx
 
-1. Haz fork del repositorio
-2. Crea una rama para tu funcionalidad (`git checkout -b feature/nueva-funcionalidad`)
-3. Haz commit de tus cambios (`git commit -m 'Añadir nueva funcionalidad'`)
-4. Haz push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abre un Pull Request
+```nginx
+server {
+    listen 80;
+    server_name llevateloexpress.com www.llevateloexpress.com;
+    
+    # Redirección a HTTPS
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name llevateloexpress.com www.llevateloexpress.com;
+    
+    ssl_certificate /etc/letsencrypt/live/llevateloexpress.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/llevateloexpress.com/privkey.pem;
+    
+    # Configuración para el frontend
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # Configuración para la API backend
+    location /api {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # Configuración para archivos estáticos y media
+    location /media {
+        alias /ruta/a/llevateloexpress/backend/media;
+    }
+    
+    location /static {
+        alias /ruta/a/llevateloexpress/backend/static;
+    }
+}
+```
+
+## Documentación Adicional
+
+- [Convenciones y Estándares](./CONVENCIONES_Y_ESTANDARES.md)
+- [Informe de Avance](./INFORME_AVANCE_LLEVATELOEXPRESS.md)
+- [Documentación del Sistema de Notificaciones](./DOCUMENTACION_NOTIFICACIONES.md)
+
+## Resolución de Problemas Comunes
+
+### Problemas con CORS
+Si hay problemas de CORS, asegúrate de que el backend tenga habilitado django-cors-headers y configurado para permitir solicitudes desde el frontend.
+
+### Problemas de Conexión API
+- Confirma que las URLs de la API en el frontend sean correctas
+- Verifica que el backend esté funcionando y accesible
+- Revisa la configuración de autenticación JWT
+
+### Errores en Consola del Navegador
+- Inspecciona la consola del navegador para detectar errores
+- Verifica la red para problemas de comunicación con la API
 
 ## Licencia
 

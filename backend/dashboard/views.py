@@ -19,6 +19,22 @@ class DashboardSavedViewViewSet(viewsets.ModelViewSet):
         """Get saved views for the current user"""
         return DashboardSavedView.objects.filter(user=self.request.user)
 
+class ApplicationAnalyticsView(APIView):
+    """
+    Vista para obtener análisis detallado de solicitudes.
+    """
+    permission_classes = [IsAdminUser]
+    
+    def post(self, request):
+        serializer = DateRangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        date_from = serializer.validated_data.get('date_from')
+        date_to = serializer.validated_data.get('date_to')
+        
+        statistics = DashboardAnalytics.get_application_statistics(date_from, date_to)
+        return Response(statistics)
+
 class DashboardAnalyticsViewSet(viewsets.ViewSet):
     """ViewSet for accessing dashboard analytics"""
     permission_classes = [IsAdminUser]

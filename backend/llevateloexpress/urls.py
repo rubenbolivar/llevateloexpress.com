@@ -22,16 +22,35 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from common.views import handler404, handler500
+from common.views import handler404, handler500, api_root
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # API endpoints
+    # API v1 root
+    path('api/v1/', api_root, name='api-root-v1'),
+    
+    # API v1 endpoints
+    path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair_v1'),
+    path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh_v1'),
+    
+    # App endpoints con prefijo v1
+    path('api/v1/accounts/', include('accounts.urls')),
+    path('api/v1/products/', include('products.urls')),
+    path('api/v1/financing/', include('financing.urls')),
+    path('api/v1/applications/', include('applications.urls')),
+    path('api/v1/payments/', include('payments.urls')),
+    path('api/v1/points/', include('points_system.urls')),
+    path('api/v1/dashboard/', include('dashboard.urls')),
+    path('api/v1/common/', include('common.urls')),
+    
+    # API root (sin versión)
+    path('api/', api_root, name='api-root'),
+    
+    # Mantener las rutas originales para compatibilidad
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
-    # App endpoints
     path('api/accounts/', include('accounts.urls')),
     path('api/products/', include('products.urls')),
     path('api/financing/', include('financing.urls')),

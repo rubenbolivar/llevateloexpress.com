@@ -10,14 +10,11 @@ from django.db.models import Sum, Count
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
 
-from .models import PointsConfig, ClientPoints, PointTransaction, UserPointsSummary
+from .models import PointsConfig, PointTransaction, UserPointsSummary
 from .serializers import (
-    PointsConfigurationSerializer, ClientPointsSerializer,
-    PointsTransactionSerializer, PointsAdjustmentSerializer,
-    EducationalPointsSerializer,
-    PointTransactionSerializer, 
-    UserPointsSummarySerializer, 
-    PointsConfigSerializer,
+    PointsConfigSerializer, UserPointsSummarySerializer,
+    PointTransactionSerializer, ManualPointsAdjustmentSerializer,
+    EducationalCoursePointsSerializer,
     PointsStatusSerializer
 )
 from .services import PointsCalculator, get_user_points_summary, calculate_user_points, get_waiting_days_for_user, add_educational_course_points, add_manual_adjustment, get_user_waiting_days
@@ -27,7 +24,7 @@ User = get_user_model()
 class PointsConfigurationViewSet(viewsets.ModelViewSet):
     """ViewSet for managing points system configuration"""
     queryset = PointsConfig.objects.all()
-    serializer_class = PointsConfigurationSerializer
+    serializer_class = PointsConfigSerializer
     permission_classes = [IsAdminUser]
     
     def get_object(self):
@@ -44,9 +41,9 @@ class PointsConfigurationViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(config)
         return Response(serializer.data)
 
-class ClientPointsViewSet(viewsets.ReadOnlyModelViewSet):
+class UserPointsSummaryViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for viewing client points"""
-    serializer_class = ClientPointsSerializer
+    serializer_class = UserPointsSummarySerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['user__username', 'user__first_name', 'user__last_name', 'user__email']
@@ -56,58 +53,49 @@ class ClientPointsViewSet(viewsets.ReadOnlyModelViewSet):
         """Get points profiles based on user role"""
         if self.request.user.is_staff:
             # Admins can see all points profiles
-            return ClientPoints.objects.all()
+            return UserPointsSummary.objects.all()
         else:
             # Regular users can only see their own points
-            return ClientPoints.objects.filter(user=self.request.user)
+            return UserPointsSummary.objects.filter(user=self.request.user)
     
     @action(detail=False, methods=['get'], url_path='my-points')
     def my_points(self, request):
         """Get the current user's points profile"""
         # Try to get the user's points profile
         try:
-            points_profile = ClientPoints.objects.get(user=request.user)
-        except ClientPoints.DoesNotExist:
+            points_profile = UserPointsSummary.objects.get(user=request.user)
+        except UserPointsSummary.DoesNotExist:
             # Create a new points profile if it doesn't exist
             points_profile = PointsCalculator.create_initial_points(request.user)
         
         serializer = self.get_serializer(points_profile)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['post'], url_path='adjust-points')
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
     def adjust_points(self, request, pk=None):
-        """Manually adjust a user's points (admin only)"""
-        points_profile = self.get_object()
+        """Adjust points for a user (admin only)"""
+        user = self.get_object()
+        serializer = ManualPointsAdjustmentSerializer(data=request.data)
         
-        # Only admins can adjust points
-        if not request.user.is_staff:
-            return Response(
-                {'detail': 'You do not have permission to perform this action.'}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        serializer = PointsAdjustmentSerializer(data=request.data)
         if serializer.is_valid():
-            points_amount = serializer.validated_data['points_amount']
-            notes = serializer.validated_data['notes']
+            points = serializer.validated_data['points']
+            reason = serializer.validated_data.get('reason', '')
             
-            # Add points adjustment
-            PointsCalculator.add_manual_adjustment(
-                points_profile.user, 
-                points_amount, 
-                notes
+            # Add or subtract points
+            add_manual_adjustment(
+                user=user,
+                points=points,
+                reason=reason,
+                created_by=request.user
             )
             
-            # Return updated points profile
-            updated_profile = self.get_object()
-            response_serializer = self.get_serializer(updated_profile)
-            return Response(response_serializer.data)
-            
+            return Response({'status': 'points adjusted'}, status=status.HTTP_200_OK)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class PointsTransactionViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for viewing points transactions"""
-    serializer_class = PointsTransactionSerializer
+    serializer_class = PointTransactionSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
@@ -117,23 +105,23 @@ class PointsTransactionViewSet(viewsets.ReadOnlyModelViewSet):
             user_id = self.request.query_params.get('user_id')
             if user_id:
                 try:
-                    points_profile = ClientPoints.objects.get(user_id=user_id)
-                    return PointTransaction.objects.filter(client_points=points_profile)
-                except ClientPoints.DoesNotExist:
+                    points_profile = UserPointsSummary.objects.get(user_id=user_id)
+                    return PointTransaction.objects.filter(user=points_profile.user)
+                except UserPointsSummary.DoesNotExist:
                     return PointTransaction.objects.none()
             return PointTransaction.objects.all()
         else:
             # Regular users can only see their own transactions
             try:
-                points_profile = ClientPoints.objects.get(user=self.request.user)
-                return PointTransaction.objects.filter(client_points=points_profile)
-            except ClientPoints.DoesNotExist:
+                points_profile = UserPointsSummary.objects.get(user=self.request.user)
+                return PointTransaction.objects.filter(user=points_profile.user)
+            except UserPointsSummary.DoesNotExist:
                 return PointTransaction.objects.none()
 
 class EducationalCourseCompletionView(generics.GenericAPIView):
-    """View for awarding points for educational course completion"""
-    serializer_class = EducationalPointsSerializer
-    permission_classes = [IsAdminUser]
+    """View for completing educational courses to earn points"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = EducationalCoursePointsSerializer
     
     def post(self, request):
         """Award points for educational course completion"""
@@ -147,7 +135,7 @@ class EducationalCourseCompletionView(generics.GenericAPIView):
         transaction = PointsCalculator.add_educational_points(user)
         
         # Return the transaction
-        response_serializer = PointsTransactionSerializer(transaction)
+        response_serializer = PointTransactionSerializer(transaction)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 class UserPointsView(APIView):
@@ -450,3 +438,9 @@ class UserWaitingDaysView(APIView):
         }
         
         return Response(data)
+
+class PointTransactionListView(generics.ListAPIView):
+    """API endpoint for listing point transactions"""
+    serializer_class = PointTransactionSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = PageNumberPagination
