@@ -1,78 +1,65 @@
 #!/bin/bash
 
-# Script de despliegue para LlévateloExpress en el VPS
-# Ejecutar como: bash deploy_vps.sh
+# Script para actualizar el código y reiniciar servicios
+# Colocar este script en el servidor y configurarlo para ejecutarse con cada push a GitHub
 
-echo "============================================"
-echo "Iniciando despliegue de LlévateloExpress.com en VPS"
-echo "============================================"
+echo "===== INICIANDO ACTUALIZACIÓN DE LLEVATELOEXPRESS ====="
+echo "Fecha: $(date)"
 
-# Actualizar sistema
-echo "Actualizando el sistema..."
-apt update && apt upgrade -y
+# Ir al directorio del proyecto
+cd /var/www/llevateloexpress.com
 
-# Instalar dependencias
-echo "Instalando dependencias..."
-apt install -y python3-pip python3-venv postgresql postgresql-contrib nginx git certbot python3-certbot-nginx
+# Detener servicios
+echo "Deteniendo servicios..."
+systemctl stop llevateloexpress-backend llevateloexpress-frontend
 
-# Configurar PostgreSQL
-echo "Configurando PostgreSQL..."
-sudo -u postgres psql -c "CREATE DATABASE llevateloexpress;"
-sudo -u postgres psql -c "CREATE USER llevatelouser WITH PASSWORD 'contraseña_segura';"
-sudo -u postgres psql -c "ALTER ROLE llevatelouser SET client_encoding TO 'utf8';"
-sudo -u postgres psql -c "ALTER ROLE llevatelouser SET default_transaction_isolation TO 'read committed';"
-sudo -u postgres psql -c "ALTER ROLE llevatelouser SET timezone TO 'UTC';"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE llevateloexpress TO llevatelouser;"
+# Hacer backup de .env por seguridad
+echo "Haciendo backup de archivos de configuración..."
+cp backend/.env backend/.env.backup
 
-# Clonar repositorio
-echo "Clonando repositorio..."
-mkdir -p /var/www
-cd /var/www
-git clone https://github.com/rubenbolivar/llevateloexpress.com.git
-cd llevateloexpress.com
+# Extraer los cambios del repositorio
+echo "Actualizando código desde GitHub..."
+git fetch --all
+git reset --hard origin/main
 
-# Configurar el backend
-echo "Configurando backend..."
+# Restaurar .env si se sobrescribió
+echo "Restaurando archivos de configuración..."
+cp backend/.env.backup backend/.env
+
+# Configurar correctamente las variables de entorno
+echo "Configurando .env con las variables correctas..."
+sed -i 's/DEBUG=True/DEBUG=False/g' backend/.env
+sed -i 's/ALLOWED_HOSTS=.*/ALLOWED_HOSTS=llevateloexpress.com,www.llevateloexpress.com,203.161.55.87,localhost,127.0.0.1/g' backend/.env
+sed -i 's/CORS_ALLOWED_ORIGINS=.*/CORS_ALLOWED_ORIGINS=https:\/\/llevateloexpress.com,https:\/\/www.llevateloexpress.com/g' backend/.env
+
+# Asegúrate de que el archivo .env tenga las variables correctas para la base de datos
+echo "Verificando configuración de base de datos..."
+if ! grep -q "DB_NAME=" backend/.env; then
+    echo "DB_NAME=llevateloexpress" >> backend/.env
+    echo "DB_USER=postgres" >> backend/.env
+    echo "DB_PASSWORD=1SimonBolivar\$\$77" >> backend/.env
+    echo "DB_HOST=localhost" >> backend/.env
+    echo "DB_PORT=5432" >> backend/.env
+fi
+
+# Actualizar dependencias del backend
+echo "Actualizando dependencias del backend..."
 cd backend
-cp .env.example .env
-sed -i 's/DEBUG=True/DEBUG=False/g' .env
-sed -i 's/ALLOWED_HOSTS=localhost,127.0.0.1/ALLOWED_HOSTS=llevateloexpress.com,www.llevateloexpress.com,203.161.55.87/g' .env
-sed -i 's/CORS_ALLOWED_ORIGINS=http:\/\/localhost:3000/CORS_ALLOWED_ORIGINS=https:\/\/llevateloexpress.com,https:\/\/www.llevateloexpress.com/g' .env
-sed -i 's/DATABASE_NAME=llevateloexpress_dev/DATABASE_NAME=llevateloexpress/g' .env
-sed -i 's/DATABASE_USER=postgres/DATABASE_USER=llevatelouser/g' .env
-sed -i 's/DATABASE_PASSWORD=postgres/DATABASE_PASSWORD=contraseña_segura/g' .env
-
-# Crear entorno virtual y activarlo
-python3 -m venv venv
 source venv/bin/activate
-
-# Instalar dependencias
 pip install -r requirements.txt
-
-# Aplicar migraciones
 python manage.py migrate
-
-# Crear superusuario
-echo "Creando superusuario admin con contraseña temporal 'admin12345'"
-echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('admin', 'admin@llevateloexpress.com', 'admin12345')" | python manage.py shell
-
-# Recolectar archivos estáticos
 python manage.py collectstatic --noinput
+cd ..
 
-# Configurar el frontend
-cd ../frontend
-
-# Instalar Node.js 18
-echo "Instalando Node.js 18..."
-curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-apt install -y nodejs
-
-# Instalar dependencias y construir
+# Actualizar dependencias del frontend
+echo "Actualizando dependencias del frontend..."
+cd frontend
 npm install
 npm run build
+cd ..
 
-# Configurar Nginx
-echo "Configurando Nginx..."
+# Corregir la configuración de Nginx para el panel de admin
+echo "Actualizando configuración de Nginx..."
 cat > /etc/nginx/sites-available/llevateloexpress << 'EOL'
 server {
     server_name llevateloexpress.com www.llevateloexpress.com;
@@ -84,6 +71,10 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        # Configuración adicional para CSRF
+        proxy_set_header X-CSRFToken $http_x_csrftoken;
+        # Configuración para evitar problemas con cookies
+        proxy_cookie_path / /;
     }
     
     # Para los estáticos del admin
@@ -145,74 +136,9 @@ EOL
 # Verificar la configuración de Nginx
 nginx -t
 
-# Corregir ALLOWED_HOSTS en settings.py
-echo "Actualizando ALLOWED_HOSTS..."
-sed -i "s/ALLOWED_HOSTS = \[.*\]/ALLOWED_HOSTS = \['llevateloexpress.com', 'www.llevateloexpress.com', '203.161.55.87', 'localhost', '127.0.0.1'\]/g" /var/www/llevateloexpress.com/backend/llevateloexpress/settings.py
-
-# Configurar SSL con Let's Encrypt
-echo "Configurando certificados SSL..."
-certbot --nginx -d llevateloexpress.com -d www.llevateloexpress.com --non-interactive --agree-tos --email admin@llevateloexpress.com
-
-# Configurar servicios systemd
-echo "Configurando servicios systemd..."
-
-# Backend service
-cat > /etc/systemd/system/llevateloexpress-backend.service << 'EOL'
-[Unit]
-Description=LlévateloExpress Backend
-After=network.target
-
-[Service]
-User=root
-WorkingDirectory=/var/www/llevateloexpress.com/backend
-ExecStart=/var/www/llevateloexpress.com/backend/venv/bin/gunicorn llevateloexpress.wsgi:application --bind 127.0.0.1:8000 --workers 3
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-EOL
-
-# Frontend service
-cat > /etc/systemd/system/llevateloexpress-frontend.service << 'EOL'
-[Unit]
-Description=LlévateloExpress Frontend
-After=network.target
-
-[Service]
-User=root
-WorkingDirectory=/var/www/llevateloexpress.com/frontend
-ExecStart=/usr/bin/npm start
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-EOL
-
-# Recargar systemd
-systemctl daemon-reload
-
-# Habilitar servicios para que inicien al arranque
-systemctl enable llevateloexpress-backend llevateloexpress-frontend
-
-# Reiniciar servicios y Nginx
-systemctl restart llevateloexpress-backend llevateloexpress-frontend
+# Iniciar servicios
+echo "Iniciando servicios..."
+systemctl start llevateloexpress-backend llevateloexpress-frontend
 systemctl restart nginx
 
-# Configurar respaldos automáticos
-echo "Configurando respaldos automáticos..."
-cat > /etc/cron.d/llevateloexpress-backup << 'EOL'
-0 2 * * * root pg_dump llevateloexpress > /var/backups/llevateloexpress_$(date +\%Y\%m\%d).sql
-0 3 * * 0 root find /var/backups/ -name "llevateloexpress_*.sql" -type f -mtime +14 -delete
-EOL
-
-mkdir -p /var/backups
-
-echo "============================================"
-echo "¡Despliegue completado!"
-echo "============================================"
-echo "Accede al panel de administración: https://llevateloexpress.com/admin"
-echo "Usuario: admin"
-echo "Contraseña: admin12345"
-echo ""
-echo "¡IMPORTANTE! Cambiar la contraseña del usuario admin inmediatamente después del primer inicio de sesión."
-echo "============================================" 
+echo "===== ACTUALIZACIÓN COMPLETADA =====" 
