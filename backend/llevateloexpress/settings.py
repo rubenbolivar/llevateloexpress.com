@@ -28,7 +28,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-j5bx1lpp3x439!r0k^2*1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
+ALLOWED_HOSTS = ['llevateloexpress.com', 'www.llevateloexpress.com', '203.161.55.87', 'localhost', '127.0.0.1']
 
 # API version
 API_VERSION = '1.0.0'
@@ -259,3 +259,9 @@ LOGGING = {
 logs_dir = os.path.join(BASE_DIR, 'logs')
 if not os.path.exists(logs_dir):
     os.makedirs(logs_dir)
+
+# Security settings for CSRF and sessions
+CSRF_TRUSTED_ORIGINS = ['https://llevateloexpress.com', 'https://www.llevateloexpress.com']
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
