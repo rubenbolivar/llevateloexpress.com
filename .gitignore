@@ -1,79 +1,16 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
-venv/
-ENV/
-
-# Django
-*.log
-local_settings.py
-db.sqlite3
-media/
-static/collected/
+# Archivos de entorno
 .env
-logs/
-
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnp
-.pnp.js
-
-# Next.js
-.next/
-out/
-
-# Production
-/build
-
-# Debug
-.DS_Store
-.vscode
-*.sublime-project
-*.sublime-workspace
-.idea
-
-# Testing
-/coverage
-.nyc_output
-.pytest_cache/
-htmlcov/
-.tox/
-.coverage
-.coverage.*
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-
-# Misc
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
 .env.production
+.env.development
 
-# Generated files
-*.swp
-*~
-.\#*
-\#*\# 
+# Otros archivos sensibles
+*/config/secrets.yml
+*/credentials.json
+*/settings/production.py
+
+# Directorios específicos que no deben sincronizarse
+node_modules/
+__pycache__/
+*.pyc
+venv/
