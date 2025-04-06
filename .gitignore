@@ -14,3 +14,9 @@ node_modules/
 __pycache__/
 *.pyc
 venv/
+
+# Preservar scripts de despliegue
+!sync_repos.sh
+!deploy.sh
+!deploy_vps.sh
+!sync_with_vps.sh
