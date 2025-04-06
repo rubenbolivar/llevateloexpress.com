@@ -1,0 +1,29 @@
+# Comandos para sincronizar el servidor con el repositorio Git
+
+# Guarda estos comandos como referencia. Si tienes problemas ejecutando el script git_sync_dashboard.sh,
+# puedes usar estos comandos directamente en el servidor.
+
+# 1. Crea un respaldo del directorio admin existente
+mkdir -p /var/www/llevateloexpress.com/backups/$(date +%Y%m%d)
+cp -r /var/www/llevateloexpress.com/frontend/src/app/admin /var/www/llevateloexpress.com/backups/$(date +%Y%m%d)/admin_backup
+
+# 2. Crea el directorio dashboard y copia los archivos
+mkdir -p /var/www/llevateloexpress.com/frontend/src/app/dashboard
+cp -r /var/www/llevateloexpress.com/frontend/src/app/admin/* /var/www/llevateloexpress.com/frontend/src/app/dashboard/
+
+# 3. Actualiza las referencias en los archivos
+sed -i 's|LlévateloExpress Admin|LlévateloExpress Dashboard|g' /var/www/llevateloexpress.com/frontend/src/app/dashboard/layout.tsx
+sed -i "s|path: '/admin|path: '/dashboard|g" /var/www/llevateloexpress.com/frontend/src/app/dashboard/layout.tsx
+sed -i "s|href = '/admin/|href = '/dashboard/|g" /var/www/llevateloexpress.com/frontend/src/app/dashboard/page.tsx
+sed -i "s|router.push('/admin/|router.push('/dashboard/|g" /var/www/llevateloexpress.com/frontend/src/app/dashboard/solicitudes/[id]/page.tsx
+
+# 4. Reconstruye la aplicación
+cd /var/www/llevateloexpress.com/frontend
+npm run build
+
+# 5. Reinicia los servicios
+systemctl restart llevateloexpress-frontend
+systemctl restart nginx
+
+# 6. Verifica si el dashboard está accesible
+curl -I https://llevateloexpress.com/dashboard/ 
