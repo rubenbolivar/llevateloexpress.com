@@ -33,6 +33,16 @@
 }
 
 @layer components {
+  /* Navbar y layout */
+  .navbar-fixed {
+    @apply fixed top-0 left-0 w-full z-50;
+  }
+  
+  .main-content {
+    @apply pt-16; /* Espacio para la navbar fija */
+  }
+  
+  /* Botones */
   .btn {
     @apply px-4 py-2 rounded-md font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
   }
@@ -53,10 +63,24 @@
     @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-primary-500;
   }
   
+  /* Tarjetas y contenedores */
   .card {
     @apply bg-white rounded-lg shadow-md overflow-hidden;
   }
   
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:border-primary-300;
+  }
+  
+  .section {
+    @apply py-12 md:py-20;
+  }
+  
+  .container-custom {
+    @apply container mx-auto px-4;
+  }
+  
+  /* Formularios */
   .form-input {
     @apply w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500;
   }
@@ -67,5 +91,41 @@
   
   .form-error {
     @apply mt-1 text-sm text-red-600;
+  }
+  
+  /* Efectos y decoraciones */
+  .gradient-primary {
+    @apply bg-gradient-to-r from-primary-600 to-primary-800;
+  }
+  
+  .gradient-accent {
+    @apply bg-gradient-to-r from-accent-500 to-accent-700;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+  }
+  
+  .shadow-custom {
+    @apply shadow-md hover:shadow-xl transition-all duration-300;
+  }
+  
+  /* Animaciones */
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .animate-slideUp {
+    animation: slideUp 0.5s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 } 

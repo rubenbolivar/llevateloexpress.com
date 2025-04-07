@@ -2,6 +2,7 @@ import '@/styles/globals.css';
 import { Inter, Poppins } from 'next/font/google';
 import { Providers } from './providers';
 import type { Metadata } from 'next';
+import Navbar from '@/components/layout/Navbar';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -30,7 +31,10 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${inter.variable} ${poppins.variable}`}>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <Navbar />
+          {children}
+        </Providers>
       </body>
     </html>
   );
