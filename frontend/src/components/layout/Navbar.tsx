@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   AppBar, 
   Toolbar, 
@@ -50,6 +50,7 @@ export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
@@ -69,6 +70,11 @@ export default function Navbar() {
     };
   }, [scrolled]);
 
+  const handleNavigation = (href: string) => {
+    router.push(href);
+    setDrawerOpen(false);
+  };
+
   const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
     if (
       event.type === 'keydown' &&
@@ -83,17 +89,20 @@ export default function Navbar() {
     <Box
       sx={{ width: 280 }}
       role="presentation"
-      onClick={toggleDrawer(false)}
       onKeyDown={toggleDrawer(false)}
     >
-      <Box sx={{ 
-        p: 2, 
-        display: 'flex', 
-        justifyContent: 'center',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        mb: 1
-      }}>
+      <Box 
+        sx={{ 
+          p: 2, 
+          display: 'flex', 
+          justifyContent: 'center',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          mb: 1,
+          cursor: 'pointer'
+        }}
+        onClick={() => handleNavigation('/')}
+      >
         <Image 
           src="/logo.svg" 
           alt="LlévateloExpress" 
@@ -106,8 +115,7 @@ export default function Navbar() {
         {navLinks.map((link) => (
           <ListItem 
             key={link.name} 
-            component={Link} 
-            href={link.href}
+            onClick={() => handleNavigation(link.href)}
             sx={{ 
               color: pathname === link.href ? 'primary.main' : 'text.primary',
               bgcolor: pathname === link.href ? 'primary.50' : 'transparent',
@@ -117,6 +125,7 @@ export default function Navbar() {
               borderRadius: 1,
               mx: 1,
               mb: 0.5,
+              cursor: 'pointer'
             }}
           >
             <ListItemIcon sx={{ 
@@ -141,13 +150,13 @@ export default function Navbar() {
         {!isAuthenticated ? (
           <>
             <ListItem 
-              component={Link} 
-              href="/login"
+              onClick={() => handleNavigation('/login')}
               sx={{ 
                 borderRadius: 1,
                 mx: 1,
                 mb: 0.5,
                 '&:hover': { bgcolor: 'action.hover' },
+                cursor: 'pointer'
               }}
             >
               <ListItemIcon sx={{ minWidth: '40px' }}>
@@ -156,13 +165,13 @@ export default function Navbar() {
               <ListItemText primary="Iniciar Sesión" />
             </ListItem>
             <ListItem 
-              component={Link} 
-              href="/registro"
+              onClick={() => handleNavigation('/registro')}
               sx={{ 
                 borderRadius: 1,
                 mx: 1,
                 mb: 0.5,
                 '&:hover': { bgcolor: 'action.hover' },
+                cursor: 'pointer'
               }}
             >
               <ListItemIcon sx={{ minWidth: '40px' }}>
@@ -173,13 +182,13 @@ export default function Navbar() {
           </>
         ) : (
           <ListItem 
-            component={Link} 
-            href="/perfil"
+            onClick={() => handleNavigation('/perfil')}
             sx={{ 
               borderRadius: 1,
               mx: 1,
               mb: 0.5,
               '&:hover': { bgcolor: 'action.hover' },
+              cursor: 'pointer'
             }}
           >
             <ListItemIcon sx={{ minWidth: '40px' }}>
@@ -204,11 +213,20 @@ export default function Navbar() {
           transition: 'all 0.3s ease-in-out',
           borderBottom: scrolled ? '1px solid rgba(0, 0, 0, 0.08)' : 'none',
           py: scrolled ? 0 : 0.5,
+          zIndex: 1100,
         }}
       >
         <Container maxWidth="xl">
           <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
-            <Link href="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
+            <Box 
+              onClick={() => handleNavigation('/')}
+              sx={{ 
+                textDecoration: 'none', 
+                color: 'inherit', 
+                display: 'flex',
+                cursor: 'pointer' 
+              }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center', py: 1 }}>
                 <Image 
                   src="/logo.svg" 
@@ -221,7 +239,7 @@ export default function Navbar() {
                   }}
                 />
               </Box>
-            </Link>
+            </Box>
 
             {/* Desktop Navigation */}
             {!isMobile && (
@@ -229,8 +247,7 @@ export default function Navbar() {
                 {navLinks.map((link) => (
                   <Button
                     key={link.name}
-                    component={Link}
-                    href={link.href}
+                    onClick={() => handleNavigation(link.href)}
                     startIcon={link.icon}
                     sx={{
                       color: scrolled 
@@ -268,8 +285,7 @@ export default function Navbar() {
                 {!isAuthenticated ? (
                   <Box sx={{ display: 'flex', gap: 1, ml: 2 }}>
                     <Button 
-                      component={Link} 
-                      href="/login"
+                      onClick={() => handleNavigation('/login')}
                       color={scrolled ? 'primary' : 'inherit'}
                       variant={scrolled ? 'outlined' : 'outlined'}
                       startIcon={<LoginIcon />}
@@ -285,8 +301,7 @@ export default function Navbar() {
                       Iniciar Sesión
                     </Button>
                     <Button 
-                      component={Link} 
-                      href="/registro" 
+                      onClick={() => handleNavigation('/registro')}
                       color={scrolled ? 'primary' : 'inherit'}
                       variant="contained"
                       startIcon={<PersonAddIcon />}
@@ -304,8 +319,7 @@ export default function Navbar() {
                 ) : (
                   <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
                     <Button 
-                      component={Link} 
-                      href="/perfil"
+                      onClick={() => handleNavigation('/perfil')}
                       color={scrolled ? 'primary' : 'inherit'}
                       variant={scrolled ? 'outlined' : 'outlined'}
                       startIcon={<AccountCircleIcon />}
