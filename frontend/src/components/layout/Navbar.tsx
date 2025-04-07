@@ -36,10 +36,11 @@ interface NavLink {
   name: string;
   href: string;
   icon: React.ReactNode;
+  isHome?: boolean;
 }
 
 const navLinks: NavLink[] = [
-  { name: 'Inicio', href: '/', icon: <HomeIcon /> },
+  { name: 'Inicio', href: '/', icon: <HomeIcon />, isHome: true },
   { name: 'Catálogo', href: '/catalogo', icon: <DirectionsCarIcon /> },
   { name: 'Financiamiento', href: '/financiamiento', icon: <AttachMoneyIcon /> },
   { name: 'Calculadora', href: '/calculadora', icon: <CalculateIcon /> },
@@ -70,9 +71,17 @@ export default function Navbar() {
     };
   }, [scrolled]);
 
-  const handleNavigation = (href: string) => {
-    router.push(href);
+  const handleNavigation = (href: string, isHome = false) => {
     setDrawerOpen(false);
+    
+    // Utilizar navegación forzada para la página de inicio
+    if (isHome) {
+      // Forzar recarga completa para la página de inicio
+      window.location.href = href;
+    } else {
+      // Usar router.push para otras páginas
+      router.push(href);
+    }
   };
 
   const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
@@ -101,7 +110,7 @@ export default function Navbar() {
           mb: 1,
           cursor: 'pointer'
         }}
-        onClick={() => handleNavigation('/')}
+        onClick={() => handleNavigation('/', true)}
       >
         <Image 
           src="/logo.svg" 
@@ -115,7 +124,7 @@ export default function Navbar() {
         {navLinks.map((link) => (
           <ListItem 
             key={link.name} 
-            onClick={() => handleNavigation(link.href)}
+            onClick={() => handleNavigation(link.href, link.isHome)}
             sx={{ 
               color: pathname === link.href ? 'primary.main' : 'text.primary',
               bgcolor: pathname === link.href ? 'primary.50' : 'transparent',
@@ -218,13 +227,17 @@ export default function Navbar() {
       >
         <Container maxWidth="xl">
           <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
-            <Box 
-              onClick={() => handleNavigation('/')}
-              sx={{ 
+            <a 
+              href="/"
+              style={{ 
                 textDecoration: 'none', 
                 color: 'inherit', 
                 display: 'flex',
                 cursor: 'pointer' 
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                handleNavigation('/', true);
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', py: 1 }}>
@@ -239,7 +252,7 @@ export default function Navbar() {
                   }}
                 />
               </Box>
-            </Box>
+            </a>
 
             {/* Desktop Navigation */}
             {!isMobile && (
@@ -247,7 +260,12 @@ export default function Navbar() {
                 {navLinks.map((link) => (
                   <Button
                     key={link.name}
-                    onClick={() => handleNavigation(link.href)}
+                    component={link.isHome ? 'a' : 'button'}
+                    href={link.isHome ? '/' : undefined}
+                    onClick={(e) => {
+                      if (link.isHome) e.preventDefault();
+                      handleNavigation(link.href, link.isHome);
+                    }}
                     startIcon={link.icon}
                     sx={{
                       color: scrolled 
