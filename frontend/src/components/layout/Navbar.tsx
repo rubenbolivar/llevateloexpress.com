@@ -36,18 +36,16 @@ interface NavLink {
   name: string;
   href: string;
   icon: React.ReactNode;
+  isHome?: boolean;
 }
 
 const navLinks: NavLink[] = [
-  { name: 'Inicio', href: '/', icon: <HomeIcon /> },
+  { name: 'Inicio', href: '/', icon: <HomeIcon />, isHome: true },
   { name: 'Catálogo', href: '/catalogo', icon: <DirectionsCarIcon /> },
   { name: 'Financiamiento', href: '/financiamiento', icon: <AttachMoneyIcon /> },
   { name: 'Calculadora', href: '/calculadora', icon: <CalculateIcon /> },
   { name: 'Nosotros', href: '/nosotros', icon: <InfoIcon /> },
 ];
-
-// Rutas que requieren recarga completa para resolver problemas de enrutamiento
-const REFRESH_ROUTES = ['/', '/login', '/registro', '/perfil'];
 
 export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -73,17 +71,15 @@ export default function Navbar() {
     };
   }, [scrolled]);
 
-  const handleNavigation = (href: string) => {
+  const handleNavigation = (href: string, isHome = false) => {
     setDrawerOpen(false);
     
-    // Verificar si la ruta requiere recarga completa
-    if (REFRESH_ROUTES.includes(href)) {
-      // Usar router.push y luego router.refresh() para forzar recarga de datos
-      router.push(href);
-      // Programar refresh después de que la navegación se complete
-      setTimeout(() => router.refresh(), 100);
+    // Utilizar navegación forzada para la página de inicio
+    if (isHome) {
+      // Forzar recarga completa para la página de inicio
+      window.location.href = href;
     } else {
-      // Navegación normal
+      // Usar router.push para otras páginas
       router.push(href);
     }
   };
@@ -114,7 +110,7 @@ export default function Navbar() {
           mb: 1,
           cursor: 'pointer'
         }}
-        onClick={() => handleNavigation('/')}
+        onClick={() => handleNavigation('/', true)}
       >
         <Image 
           src="/logo.svg" 
@@ -128,7 +124,7 @@ export default function Navbar() {
         {navLinks.map((link) => (
           <ListItem 
             key={link.name} 
-            onClick={() => handleNavigation(link.href)}
+            onClick={() => handleNavigation(link.href, link.isHome)}
             sx={{ 
               color: pathname === link.href ? 'primary.main' : 'text.primary',
               bgcolor: pathname === link.href ? 'primary.50' : 'transparent',
@@ -241,7 +237,7 @@ export default function Navbar() {
               }}
               onClick={(e) => {
                 e.preventDefault();
-                handleNavigation('/');
+                handleNavigation('/', true);
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', py: 1 }}>
@@ -264,8 +260,12 @@ export default function Navbar() {
                 {navLinks.map((link) => (
                   <Button
                     key={link.name}
-                    component="button"
-                    onClick={() => handleNavigation(link.href)}
+                    component={link.isHome ? 'a' : 'button'}
+                    href={link.isHome ? '/' : undefined}
+                    onClick={(e) => {
+                      if (link.isHome) e.preventDefault();
+                      handleNavigation(link.href, link.isHome);
+                    }}
                     startIcon={link.icon}
                     sx={{
                       color: scrolled 
