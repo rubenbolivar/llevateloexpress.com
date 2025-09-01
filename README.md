@@ -275,3 +275,5 @@ Si hay problemas de CORS, asegúrate de que el backend tenga habilitado django-c
 ## Licencia
 
 Este proyecto es privado y no está disponible para uso público sin autorización. 
+
+<!-- Security scan triggered at 2025-09-01 20:17:05 -->
